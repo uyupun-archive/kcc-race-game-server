@@ -3,6 +3,13 @@ const { createServer } = require("node:http");
 const { Server } = require("socket.io");
 const ngrok = require("ngrok");
 const axios = require("axios");
+require("dotenv").config();
+const https = require("https");
+
+// 自己署名証明書エラーを無視するAgentを作成
+const agent = new https.Agent({
+  rejectUnauthorized: false,
+});
 
 const app = express();
 const server = createServer(app);
@@ -17,6 +24,34 @@ const playerList = {
   player2: "",
 };
 
+const pollExternalServer = async () => {
+  try {
+    const response = await axios.get(
+      `${process.env.UYUNPUNION_URL}/balloon/status`,
+      {
+        httpsAgent: agent,
+        headers: {
+          "UYUNPUNION-TOKEN": process.env.UYUNPUNION_TOKEN,
+        },
+      }
+    );
+    const data = response.data;
+    if (data.balloon_1) {
+      io.to(playerList.player1).emit("winner", true);
+      io.to(playerList.player2).emit("winner", false);
+      clearInterval(pollingInterval);
+    } else if (data.balloon_2) {
+      io.to(playerList.player2).emit("winner", true);
+      io.to(playerList.player1).emit("winner", false);
+      clearInterval(pollingInterval);
+    }
+  } catch (error) {
+    console.error("Error polling external server:", error);
+  }
+};
+
+let pollingInterval;
+
 io.on("connection", (socket) => {
   // idを返す
   socket.emit("id", socket.id);
@@ -26,10 +61,10 @@ io.on("connection", (socket) => {
     playerList.player2 = socket.id;
   }
 
-  // プレイヤーが揃ったらローディングをやめる
+  // プレイヤーが揃ったらローディングをやめ、ポーリングを開始する
   if (playerList.player1 != "" && playerList.player2 != "") {
     io.emit("loading", false);
-    // TODO: ポーリングを開始する GET /balloon/status
+    pollingInterval = setInterval(pollExternalServer, 5000);
   }
 
   // メッセージを受け取り、それを全ユーザーに返す
@@ -46,10 +81,11 @@ io.on("connection", (socket) => {
       playerList.player2 = "";
     }
 
-    if (io.engine.clientsCount - 1 == 2) {
+    if (playerList.player1 != "" && playerList.player2 != "") {
       io.emit("loading", false);
     } else {
       io.emit("loading", true);
+      clearInterval(pollingInterval);
     }
   });
 });
