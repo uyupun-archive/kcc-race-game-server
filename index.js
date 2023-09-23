@@ -28,13 +28,13 @@ io.on("connection", (socket) => {
   // プレイヤーが揃ったらローディングをやめる
   if (playerList.player1 != "" && playerList.player2 != "") {
     io.emit("loading", false);
-    // TODO: ポーリングを開始する
+    // TODO: ポーリングを開始する GET /balloon/status
   }
 
   // メッセージを受け取り、それを全ユーザーに返す
   socket.on("post-message", (req) => {
     io.emit("message", req);
-    // TODO: 点数を行い、POST /chikuchikuにリクエストする
+    // TODO: 点数を行い、POST /balloon/needleにリクエストする
   });
 
   // 接続が切れた時にローディング状態にする
