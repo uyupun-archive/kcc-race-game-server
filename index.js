@@ -12,21 +12,22 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("a user connected");
-
+  // idを返す
   socket.emit("id", socket.id);
-  console.log(`connectedClients: ${io.engine.clientsCount}`);
+
+  // 接続台数が2台になったらローディングをやめる
   if (io.engine.clientsCount == 2) {
     io.emit("loading", false);
   }
 
+  // メッセージを受け取り、それを全ユーザーに返す
   socket.on("post-message", (req) => {
     io.emit("message", req);
+    // TODO: 点数を行い、POST /chikuchikuにリクエストする
   });
 
+  // 接続が切れた時にローディング状態にする
   socket.on("disconnect", (reason) => {
-    console.log("User disconnected with socket ID:", socket.id);
-    console.log(`connectedClients: ${io.engine.clientsCount}`);
     if (io.engine.clientsCount - 1 == 2) {
       io.emit("loading", false);
     } else {
