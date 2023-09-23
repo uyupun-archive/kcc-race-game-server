@@ -25,9 +25,10 @@ io.on("connection", (socket) => {
     playerList.player2 = socket.id;
   }
 
-  // 接続台数が2台になったらローディングをやめる
-  if (io.engine.clientsCount == 2) {
+  // プレイヤーが揃ったらローディングをやめる
+  if (playerList.player1 != "" && playerList.player2 != "") {
     io.emit("loading", false);
+    // TODO: ポーリングを開始する
   }
 
   // メッセージを受け取り、それを全ユーザーに返す
