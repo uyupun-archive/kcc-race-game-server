@@ -11,9 +11,19 @@ app.get("/", (req, res) => {
   res.send("<h1>Hello world</h1>");
 });
 
+const playerList = {
+  player1: "",
+  player2: "",
+};
+
 io.on("connection", (socket) => {
   // idを返す
   socket.emit("id", socket.id);
+  if (playerList.player1 == "") {
+    playerList.player1 = socket.id;
+  } else if (playerList.player2 == "") {
+    playerList.player2 = socket.id;
+  }
 
   // 接続台数が2台になったらローディングをやめる
   if (io.engine.clientsCount == 2) {
@@ -28,6 +38,12 @@ io.on("connection", (socket) => {
 
   // 接続が切れた時にローディング状態にする
   socket.on("disconnect", (reason) => {
+    if (playerList.player1 == socket.id) {
+      playerList.player1 = "";
+    } else if (playerList.player2 == socket.id) {
+      playerList.player2 = "";
+    }
+
     if (io.engine.clientsCount - 1 == 2) {
       io.emit("loading", false);
     } else {
