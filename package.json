@@ -1,0 +1,17 @@
+{
+  "name": "kcc-race-game-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Hideaki Takahashi <t.takashi0602@gmail.com> (https://twitter.com/takashimelon)",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ngrok": "^5.0.0-beta.2",
+    "socket.io": "^4.7.2"
+  }
+}
