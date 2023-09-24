@@ -26,7 +26,7 @@ const playerList = {
 
 const pollExternalServer = async () => {
   try {
-    const response = await axios.get(
+    const res = await axios.get(
       `${process.env.UYUNPUNION_URL}/balloon/status`,
       {
         httpsAgent: agent,
@@ -35,7 +35,7 @@ const pollExternalServer = async () => {
         },
       }
     );
-    const data = response.data;
+    const data = res.data;
     if (data.balloon_1) {
       io.to(playerList.player1).emit("winner", true);
       io.to(playerList.player2).emit("winner", false);
@@ -52,6 +52,40 @@ const pollExternalServer = async () => {
 
 let pollingInterval;
 
+const sendMessageAndPower = async (data) => {
+  try {
+    const res = await axios.get(
+      `${process.env.TEXT_EVALUATOR_URL}/text-evaluate?text=${data.message}`,
+      {
+        httpsAgent: agent,
+      }
+    );
+    const power = res.data.score;
+    const balloon_id = playerList.player1 == data.id ? 1 : 2;
+    console.log(`power: ${power}`);
+    console.log(`balloon_id: ${balloon_id}`);
+
+    await axios.post(
+      `${process.env.UYUNPUNION_URL}/balloon/needle`,
+      {
+        balloon_id,
+        power,
+      },
+      {
+        httpsAgent: agent,
+        headers: {
+          "UYUNPUNION-TOKEN": process.env.UYUNPUNION_TOKEN,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("成功です！");
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
+
 io.on("connection", (socket) => {
   // idを返す
   socket.emit("id", socket.id);
@@ -61,16 +95,19 @@ io.on("connection", (socket) => {
     playerList.player2 = socket.id;
   }
 
+  console.log(playerList);
+
   // プレイヤーが揃ったらローディングをやめ、ポーリングを開始する
   if (playerList.player1 != "" && playerList.player2 != "") {
+    console.log("プレイヤーが揃いました！");
     io.emit("loading", false);
-    pollingInterval = setInterval(pollExternalServer, 5000);
+    // pollingInterval = setInterval(pollExternalServer, 5000);
   }
 
   // メッセージを受け取り、それを全ユーザーに返す
   socket.on("post-message", (req) => {
     io.emit("message", req);
-    // TODO: 点数を行い、POST /balloon/needleにリクエストする
+    sendMessageAndPower(req);
   });
 
   // 接続が切れた時にローディング状態にする
