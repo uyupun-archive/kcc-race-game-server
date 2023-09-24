@@ -68,8 +68,8 @@ const sendMessageAndPower = async (data) => {
     await axios.post(
       `${process.env.UYUNPUNION_URL}/balloon/needle`,
       {
-        balloon_id,
-        power,
+        balloon_id: balloon_id,
+        power: power === 0 ? 1 : power,
       },
       {
         httpsAgent: agent,
