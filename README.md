@@ -1,5 +1,7 @@
 # Kanninbukuro Chikuchiku Chikun Race
 
+<img src="assets/app_icon.png" width="200px">
+
 ## セットアップ
 
 ```bash
